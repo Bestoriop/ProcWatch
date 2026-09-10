@@ -798,6 +798,7 @@ function ProcWatchExitButton_OnEnter()
     ProcWatch_Tooltip("Exit ProcWatch", "This completely shuts down ProcWatch.  All monitoring will cease and all totals are lost.");
 end
 
+
 function ProcWatchPauseButton_OnEnter()
 
     if (ProcWatch.Paused=="enabled") then
@@ -805,12 +806,10 @@ function ProcWatchPauseButton_OnEnter()
     elseif (ProcWatch.Paused=="paused") then
 	ProcWatch_Tooltip("Resume ProcWatch", "Resume monitoring for procs.");
     elseif (ProcWatch.Paused=="disabled") then
-	if ProcWatch.Enabled and (ProcWatch.BeginTime>0) then
-	    ProcWatch_Tooltip("Pause ProcWatch", "Stop counting hits and procs for the current fight.  Time keeps running; only hits and procs are frozen until you resume.");
-	elseif not ProcWatch.Enabled then
+	if not ProcWatch.Enabled then
 	    ProcWatch_Tooltip("Pause Disabled", "Monitoring is already suspended.  Once ProcWatch has an event to watch for, this button can be used to pause and resume monitoring without affecting totals.");
 	else
-	    ProcWatch_Tooltip("Pause Disabled", "ProcWatch is currently idle and waiting for you to hit something.");
+	    ProcWatch_Tooltip("Pause Disabled", "ProcWatch is active and watching for procs in the current fight.  When the fight is over you can pause.");
 	end
     end
 
