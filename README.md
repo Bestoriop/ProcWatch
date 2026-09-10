@@ -34,7 +34,7 @@ Matching is case-insensitive.
   yellow = paused, grey = idle, red = stopped).
 - **Event**: the text currently being watched. Click it to change it
   (this restarts monitoring and resets totals).
-- **Current**: stats for the fight in progress, updated **in real time**
+- **Last**: stats for the fight in progress, updated **in real time**
   (refreshed every 1 second).
 - **Total**: cumulative history already committed **plus** the current
   fight, also updated in real time.
