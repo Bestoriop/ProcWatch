@@ -1216,6 +1216,9 @@
 			<OnEvent>
 				ProcWatch_OnEvent(event);
 			</OnEvent>
+			<OnUpdate>
+        		ProcWatch_OnUpdate(arg1);
+    		</OnUpdate>
 			<OnMouseDown>
 				ProcWatch_OnMouseDown(arg1);
 			</OnMouseDown>
