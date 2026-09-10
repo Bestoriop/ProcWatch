@@ -361,34 +361,34 @@
 			</Button>
 
 			<Button name = "ProcWatchHitsPerProcLabel_Static">
-				<Size>
-					<AbsDimension x="80" y="15" />
-				</Size>
-				<Anchors>
-					<Anchor point="TOPLEFT" relativeTo="ProcWatchTimeLabel_Static" relativePoint="BOTTOMLEFT">
-						<Offset>
-							<AbsDimension x="0" y="0" />
-						</Offset>
-					</Anchor>
-				</Anchors>
-				<Layers>
-					<Layer level = "BACKGROUND">
-						<FontString name="ProcWatchHitsPerProcLabel_Text" inherits="GameFontNormal" justifyH="RIGHT" wraponspaces="false" text="Hits/Proc:">
-							<Size>
-								<AbsDimension x="80" y="15"/>
-							</Size>
-						</FontString>
+			    <Size>
+			        <AbsDimension x="80" y="15" />
+			    </Size>
+			    <Anchors>
+			        <Anchor point="TOPLEFT" relativeTo="ProcWatchTimeLabel_Static" relativePoint="BOTTOMLEFT">
+			            <Offset>
+			                <AbsDimension x="0" y="0" />
+			            </Offset>
+			        </Anchor>
+			    </Anchors>
+			    <Layers>
+			        <Layer level = "BACKGROUND">
+			            <FontString name="ProcWatchHitsPerProcLabel_Text" inherits="GameFontNormal" justifyH="RIGHT" wraponspaces="false" text="Procs/Hits:">
+			                <Size>
+			                    <AbsDimension x="80" y="15"/>
+			                </Size>
+			            </FontString>
 
-					</Layer>
-				</Layers>
-				<Scripts>
-					<OnMouseDown>
-						ProcWatch_OnMouseDown(arg1);
-					</OnMouseDown>
-					<OnMouseUp>
-						ProcWatch_OnMouseUp(arg1);
-					</OnMouseUp>
-				</Scripts>
+			        </Layer>
+			    </Layers>
+			    <Scripts>
+			        <OnMouseDown>
+			            ProcWatch_OnMouseDown(arg1);
+			        </OnMouseDown>
+			        <OnMouseUp>
+			            ProcWatch_OnMouseUp(arg1);
+			        </OnMouseUp>
+			    </Scripts>
 			</Button>
 
 			<Button name = "ProcWatchProcsPerMinLabel_Static">
