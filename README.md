@@ -89,8 +89,6 @@ Gello, Hyjal — original version.
   already-committed history.
 - Renamed "Hits/Proc" to "Procs/Hits", now shown as a percentage rounded
   to one decimal instead of a truncated ratio.
-- The Pause button can now be used while in combat (previously available
-  only out of combat).
 - Fixed a bug where ending combat while paused would break the addon (the
   chat hook was never released, stats were never committed).
 - Fixed a bug where procs kept being counted while paused even though hits
