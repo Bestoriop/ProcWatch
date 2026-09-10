@@ -397,7 +397,6 @@ function ProcWatch_FormatTime(arg1)
 
     return text;
 end
-
 function ProcWatch_UpdateDisplay()
 
     ProcWatchEventString_Text:SetText(ProcWatch.ProcString);
@@ -405,8 +404,8 @@ function ProcWatch_UpdateDisplay()
     ProcWatchLastProcs_Text:SetText(ProcWatch.LastProcs);
     ProcWatchLastTime_Text:SetText(ProcWatch_FormatTime(ProcWatch.LastTime));
 
-    if (ProcWatch.LastProcs>0) then
-	ProcWatchLastHitsPerProc_Text:SetText(math.floor((ProcWatch.LastHits/ProcWatch.LastProcs)*10)/10);
+    if (ProcWatch.LastHits>0) then
+	ProcWatchLastHitsPerProc_Text:SetText(string.format("%.1f%%", (ProcWatch.LastProcs/ProcWatch.LastHits)*100));
     else
 	ProcWatchLastHitsPerProc_Text:SetText("--");
     end
@@ -421,8 +420,8 @@ function ProcWatch_UpdateDisplay()
     ProcWatchTotalProcs_Text:SetText(ProcWatch.TotalProcs);
     ProcWatchTotalTime_Text:SetText(ProcWatch_FormatTime(ProcWatch.TotalTime));
 
-    if (ProcWatch.TotalProcs>0) then
-	ProcWatchTotalHitsPerProc_Text:SetText(math.floor((ProcWatch.TotalHits/ProcWatch.TotalProcs)*10)/10);
+    if (ProcWatch.TotalHits>0) then
+	ProcWatchTotalHitsPerProc_Text:SetText(string.format("%.1f%%", (ProcWatch.TotalProcs/ProcWatch.TotalHits)*100));
     else
 	ProcWatchTotalHitsPerProc_Text:SetText("--");
     end
@@ -432,7 +431,7 @@ function ProcWatch_UpdateDisplay()
     else
 	ProcWatchTotalProcsPerMin_Text:SetText("--");
     end
-end    
+end
 
 -- this sets the state for the pause button: "disable" "pause" "resume"
 function ProcWatch_SetPause(arg1)
