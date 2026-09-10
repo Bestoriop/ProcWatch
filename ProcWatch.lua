@@ -60,6 +60,7 @@ ProcWatchDamage = {}
 
 b_ProcWatchLoaded = false;
 f_ProcWatchOriginalChatFrame_OnEvent = nil;
+f_ProcWatchElapsedSinceUpdate = 0; -- accumulateur pour throttle du rafraîchissement live
 
 BINDING_HEADER_PROCWATCH = "ProcWatch";
 
@@ -811,4 +812,60 @@ function ProcWatchPauseButton_OnEnter()
 	end
     end
 
+end
+
+
+function ProcWatch_OnUpdate(elapsed)
+
+    if (ProcWatch.BeginTime > 0) and not ProcWatch.Minimized then
+        f_ProcWatchElapsedSinceUpdate = f_ProcWatchElapsedSinceUpdate + elapsed;
+        if (f_ProcWatchElapsedSinceUpdate >= 1) then
+            f_ProcWatchElapsedSinceUpdate = 0;
+            ProcWatch_UpdateLiveDisplay();
+        end
+    end
+end
+
+function ProcWatch_UpdateLiveDisplay()
+
+    local liveTime = GetTime() - ProcWatch.BeginTime;
+    local liveTotalHits = ProcWatch.TotalHits + ProcWatch.Hits;
+    local liveTotalProcs = ProcWatch.TotalProcs + ProcWatch.Procs;
+    local liveTotalTime = ProcWatch.TotalTime + liveTime;
+
+    ProcWatchEventString_Text:SetText(ProcWatch.ProcString);
+
+    -- Colonne "Current" : combat en cours uniquement
+    ProcWatchLastHits_Text:SetText(ProcWatch.Hits);
+    ProcWatchLastProcs_Text:SetText(ProcWatch.Procs);
+    ProcWatchLastTime_Text:SetText(ProcWatch_FormatTime(liveTime));
+
+    if (ProcWatch.Hits>0) then
+	ProcWatchLastHitsPerProc_Text:SetText(string.format("%.1f%%", (ProcWatch.Procs/ProcWatch.Hits)*100));
+    else
+	ProcWatchLastHitsPerProc_Text:SetText("--");
+    end
+
+    if (liveTime>0) then
+	ProcWatchLastProcsPerMin_Text:SetText(math.floor((ProcWatch.Procs/liveTime)*600)/10);
+    else
+	ProcWatchLastProcsPerMin_Text:SetText("--");
+    end
+
+    -- Colonne "Total" : historique committé + combat en cours
+    ProcWatchTotalHits_Text:SetText(liveTotalHits);
+    ProcWatchTotalProcs_Text:SetText(liveTotalProcs);
+    ProcWatchTotalTime_Text:SetText(ProcWatch_FormatTime(liveTotalTime));
+
+    if (liveTotalHits>0) then
+	ProcWatchTotalHitsPerProc_Text:SetText(string.format("%.1f%%", (liveTotalProcs/liveTotalHits)*100));
+    else
+	ProcWatchTotalHitsPerProc_Text:SetText("--");
+    end
+
+    if (liveTotalTime>0) then
+	ProcWatchTotalProcsPerMin_Text:SetText(math.floor((liveTotalProcs/liveTotalTime)*600)/10);
+    else
+	ProcWatchTotalProcsPerMin_Text:SetText("--");
+    end
 end
