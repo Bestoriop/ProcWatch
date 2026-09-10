@@ -34,6 +34,8 @@ ProcWatch.ProcString = ""; -- the (text) of /procwatch (text)
 
 ProcWatch.BeginTime = 0; -- time of the first hit in current fight
 ProcWatch.EndTime = 0; -- time of the last hit in current fight
+ProcWatch.PauseStartTime = 0; -- moment où la pause en cours a commencé (0 si pas en pause)
+ProcWatch.PausedDuration = 0; -- durée cumulée des pauses pendant le combat en cours
 ProcWatch.Hits = 0; -- number of hits in current fight
 ProcWatch.Procs = 0; -- number of procs in current fight
 
@@ -687,13 +689,17 @@ function ProcWatchPauseButton_OnClick()
 
     if (ProcWatch.Paused=="enabled") then
 	ProcWatch_SetPause("paused");
+	ProcWatch.PauseStartTime = GetTime();
         ProcWatchPauseButton_OnEnter();
     elseif (ProcWatch.Paused=="paused") then
+	ProcWatch.PausedDuration = ProcWatch.PausedDuration + (GetTime() - ProcWatch.PauseStartTime);
+	ProcWatch.PauseStartTime = 0;
 	ProcWatch_SetPause("enabled");
         ProcWatchPauseButton_OnEnter();
     elseif (ProcWatch.Paused=="disabled") and ProcWatch.Enabled and (ProcWatch.BeginTime>0) then
 	-- combat en cours : on autorise la mise en pause du suivi
 	ProcWatch_SetPause("paused");
+	ProcWatch.PauseStartTime = GetTime();
         ProcWatchPauseButton_OnEnter();
     end
 
@@ -839,7 +845,12 @@ end
 
 function ProcWatch_UpdateLiveDisplay()
 
-    local liveTime = GetTime() - ProcWatch.BeginTime;
+    local liveTime;
+    if (ProcWatch.Paused=="paused") then
+	liveTime = ProcWatch.PauseStartTime - ProcWatch.BeginTime - ProcWatch.PausedDuration;
+    else
+	liveTime = GetTime() - ProcWatch.BeginTime - ProcWatch.PausedDuration;
+    end
     local liveTotalHits = ProcWatch.TotalHits + ProcWatch.Hits;
     local liveTotalProcs = ProcWatch.TotalProcs + ProcWatch.Procs;
     local liveTotalTime = ProcWatch.TotalTime + liveTime;
