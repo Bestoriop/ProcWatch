@@ -78,6 +78,18 @@ end
 function ProcWatch_OnEvent(event)
     if (event == "VARIABLES_LOADED") then
         b_ProcWatchLoaded = true
+		-- reset des compteurs à chaque démarrage, indépendamment de l'état sauvegardé
+		ProcWatch.TotalHits = 0;
+		ProcWatch.TotalProcs = 0;
+		ProcWatch.TotalTime = 0;
+		ProcWatch.LastHits = 0;
+		ProcWatch.LastProcs = 0;
+		ProcWatch.LastTime = 0;
+		ProcWatch.BeginTime = 0;
+		ProcWatch.EndTime = 0;
+		ProcWatch.Hits = 0;
+		ProcWatch.Procs = 0;
+		ProcWatchDamage = {nil}
 		if ProcWatch.Enabled then
 			-- if .Enabled, it means we had ProcWatch running when variables
 			-- were last saved.  So pick up from where we were in idle mode.
