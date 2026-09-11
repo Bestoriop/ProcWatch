@@ -156,7 +156,9 @@ function ProcWatch_OnEvent(event)
 					ProcWatch.TotalHits = ProcWatch.TotalHits + ProcWatch.LastHits
 					ProcWatch.LastProcs = ProcWatch.Procs
 					ProcWatch.TotalProcs = ProcWatch.TotalProcs + ProcWatch.LastProcs
-					ProcWatch.LastTime = ProcWatch.EndTime - ProcWatch.BeginTime - ProcWatch.PausedDuration
+					-- borné à 0 : une pause déclenchée après le dernier hit mais avant
+					-- la sortie de combat peut sinon rendre ce calcul négatif
+					ProcWatch.LastTime = math.max(0, ProcWatch.EndTime - ProcWatch.BeginTime - ProcWatch.PausedDuration)
 					ProcWatch.TotalTime = ProcWatch.TotalTime + ProcWatch.LastTime
 					ProcWatch_UpdateDisplay()
 				end
@@ -868,7 +870,7 @@ end
 
 function ProcWatch_UpdateLiveDisplay()
 
-    local liveTime = GetTime() - ProcWatch.BeginTime - ProcWatch.PausedDuration;
+    local liveTime = math.max(0, GetTime() - ProcWatch.BeginTime - ProcWatch.PausedDuration);
     local liveTotalHits = ProcWatch.TotalHits + ProcWatch.Hits;
     local liveTotalProcs = ProcWatch.TotalProcs + ProcWatch.Procs;
     local liveTotalTime = ProcWatch.TotalTime + liveTime;
