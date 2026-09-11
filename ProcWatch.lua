@@ -34,6 +34,8 @@ ProcWatch.ProcString = ""; -- the (text) of /procwatch (text)
 
 ProcWatch.BeginTime = 0; -- time of the first hit in current fight
 ProcWatch.EndTime = 0; -- time of the last hit in current fight
+ProcWatch.PauseStartTime = 0; -- moment where the current pause began (0 if not paused)
+ProcWatch.PausedDuration = 0; -- cumulative paused duration during the current fight
 ProcWatch.Hits = 0; -- number of hits in current fight
 ProcWatch.Procs = 0; -- number of procs in current fight
 
@@ -87,6 +89,8 @@ function ProcWatch_OnEvent(event)
 		ProcWatch.LastTime = 0;
 		ProcWatch.BeginTime = 0;
 		ProcWatch.EndTime = 0;
+		ProcWatch.PauseStartTime = 0;
+		ProcWatch.PausedDuration = 0;
 		ProcWatch.Hits = 0;
 		ProcWatch.Procs = 0;
 		ProcWatchDamage = {nil}
@@ -114,27 +118,34 @@ function ProcWatch_OnEvent(event)
 		SlashCmdList["ProcWatchCOMMAND"] = ProcWatch_SlashHandler
 		SLASH_ProcWatchCOMMAND1 = "/procwatch"
 	end
-    if b_ProcWatchLoaded and ProcWatch.Enabled and (ProcWatch.Paused~="paused") then
-		if (event == "CHAT_MSG_COMBAT_SELF_HITS") then
+    if b_ProcWatchLoaded and ProcWatch.Enabled then
+		if (event == "CHAT_MSG_COMBAT_SELF_HITS") and (ProcWatch.Paused~="paused") then
 			ProcWatch.Hits = ProcWatch.Hits + 1
 			if (ProcWatch.BeginTime==0) then
-				ProcWatch_SetPause("disabled")
 				ProcWatch.BeginTime = GetTime() -- note time of first hit
 				ProcWatch.EndTime = ProcWatch.BeginTime -- first hit could be last also
+				ProcWatch_SetPause("disabled")
 				ProcWatch_HookChat() -- begin watching for procs
 			else
-			ProcWatch.EndTime = GetTime() -- assume each hit after first can be last
-	    end
-	elseif (event == "PLAYER_REGEN_DISABLED") then
-	    if ProcWatch.WatchAllCombat and (ProcWatch.BeginTime==0) then
-			ProcWatch_SetPause("disabled")
-			ProcWatch.BeginTime = GetTime()
-			ProcWatch.EndTime = ProcWatch.BeginTime
-			ProcWatch_HookChat()
-	    end
-    elseif (event == "PLAYER_REGEN_ENABLED") then
-	    if (ProcWatch.BeginTime > 0) then
-			ProcWatch_ReleaseChat() -- stop watching for procs
+				ProcWatch.EndTime = GetTime() -- assume each hit after first can be last
+			end
+		elseif (event == "PLAYER_REGEN_DISABLED") and (ProcWatch.Paused~="paused") then
+			if ProcWatch.WatchAllCombat and (ProcWatch.BeginTime==0) then
+				ProcWatch.BeginTime = GetTime()
+				ProcWatch.EndTime = ProcWatch.BeginTime
+				ProcWatch_SetPause("disabled")
+				ProcWatch_HookChat()
+			end
+		elseif (event == "PLAYER_REGEN_ENABLED") then
+			-- toujours traité, même si on quitte le combat en pleine pause,
+			-- sinon l'addon reste bloqué (chat hooké, stats jamais committées)
+			if (ProcWatch.BeginTime > 0) then
+				if (ProcWatch.Paused=="paused") then
+					-- on clôture la pause en cours avant de calculer le temps final
+					ProcWatch.PausedDuration = ProcWatch.PausedDuration + (GetTime() - ProcWatch.PauseStartTime)
+					ProcWatch.PauseStartTime = 0
+				end
+				ProcWatch_ReleaseChat() -- stop watching for procs
 				if ProcWatch.WatchAllCombat then
 					ProcWatch.EndTime = GetTime()
 				end
@@ -145,13 +156,14 @@ function ProcWatch_OnEvent(event)
 					ProcWatch.TotalHits = ProcWatch.TotalHits + ProcWatch.LastHits
 					ProcWatch.LastProcs = ProcWatch.Procs
 					ProcWatch.TotalProcs = ProcWatch.TotalProcs + ProcWatch.LastProcs
-					ProcWatch.LastTime = ProcWatch.EndTime - ProcWatch.BeginTime
+					ProcWatch.LastTime = ProcWatch.EndTime - ProcWatch.BeginTime - ProcWatch.PausedDuration
 					ProcWatch.TotalTime = ProcWatch.TotalTime + ProcWatch.LastTime
 					ProcWatch_UpdateDisplay()
 				end
 				ProcWatch.Hits = 0
 				ProcWatch.Procs = 0
 				ProcWatch.BeginTime = 0
+				ProcWatch.PausedDuration = 0
 			end
 		end
     end
@@ -186,7 +198,7 @@ end
 -- It is not hooked in idle or stopped mode.
 function ProcWatch_ChatFrame_OnEvent()
     f_ProcWatchOriginalChatFrame_OnEvent(event,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9)
-    if event and (string.sub(event,1,14)=="CHAT_MSG_SPELL" or string.sub(event,1,15)=="CHAT_MSG_COMBAT") then
+    if (ProcWatch.Paused~="paused") and event and (string.sub(event,1,14)=="CHAT_MSG_SPELL" or string.sub(event,1,15)=="CHAT_MSG_COMBAT") then
         if string.find(string.lower(arg1),string.lower(ProcWatch.ProcString)) then
 			ProcWatch.Procs = ProcWatch.Procs + 1
 			ProcWatchDamage[ProcWatch.ProcString.."("..ProcWatch.TotalProcs + ProcWatch.Procs..")"] = arg1
@@ -226,6 +238,8 @@ function ProcWatch_Shutdown()
     ProcWatch.ProcString = "None (Click Here)";
     ProcWatch.BeginTime = 0;
     ProcWatch.EndTime = 0;
+    ProcWatch.PauseStartTime = 0;
+    ProcWatch.PausedDuration = 0;
     ProcWatch.Hits = 0;
     ProcWatch.Procs = 0;
     ProcWatch.Enabled = false;
@@ -410,6 +424,7 @@ function ProcWatch_FormatTime(arg1)
 
     return text;
 end
+
 function ProcWatch_UpdateDisplay()
 
     ProcWatchEventString_Text:SetText(ProcWatch.ProcString);
@@ -461,6 +476,11 @@ function ProcWatch_SetPause(arg1)
 	ProcWatchPauseButton:SetNormalTexture("Interface\\AddOns\\ProcWatch\\ProcWatch-Pause-Up");
 	ProcWatchPauseButton:SetPushedTexture("Interface\\AddOns\\ProcWatch\\ProcWatch-Pause-Down");
 	ProcWatchStatusTexture:SetTexture("Interface\\AddOns\\ProcWatch\\ProcWatch-Idle");
+    elseif (ProcWatch.Paused=="disabled") and ProcWatch.Enabled and (ProcWatch.BeginTime>0) then
+	-- combat en cours : le bouton reste cliquable pour permettre la pause
+	ProcWatchPauseButton:SetNormalTexture("Interface\\AddOns\\ProcWatch\\ProcWatch-Pause-Up");
+	ProcWatchPauseButton:SetPushedTexture("Interface\\AddOns\\ProcWatch\\ProcWatch-Pause-Down");
+	ProcWatchStatusTexture:SetTexture("Interface\\AddOns\\ProcWatch\\ProcWatch-Event");
     else
 	ProcWatchPauseButton:SetNormalTexture("Interface\\AddOns\\ProcWatch\\ProcWatch-Pause-Disabled");
 	ProcWatchPauseButton:SetPushedTexture("Interface\\AddOns\\ProcWatch\\ProcWatch-Pause-Disabled");
@@ -689,15 +709,21 @@ end
 
 function ProcWatchPauseButton_OnClick()
 
-    if ProcWatch.Paused and (ProcWatch.Paused~="disabled") then
-
-	if (ProcWatch.Paused=="enabled") then
-	    ProcWatch_SetPause("paused");
-	elseif (ProcWatch.Paused=="paused") then
-	    ProcWatch_SetPause("enabled");
-	end
+    if (ProcWatch.Paused=="enabled") then
+	ProcWatch_SetPause("paused");
+	ProcWatch.PauseStartTime = GetTime();
         ProcWatchPauseButton_OnEnter();
-
+    elseif (ProcWatch.Paused=="paused") then
+	ProcWatch.PausedDuration = ProcWatch.PausedDuration + (GetTime() - ProcWatch.PauseStartTime);
+	ProcWatch.PauseStartTime = 0;
+	ProcWatch_SetPause("enabled");
+        ProcWatchPauseButton_OnEnter();
+    elseif (ProcWatch.Paused=="disabled") and ProcWatch.Enabled and (ProcWatch.BeginTime>0) then
+	-- combat en cours : on fige hits, procs et temps à l'instant précis du clic
+	ProcWatch_UpdateLiveDisplay();
+	ProcWatch_SetPause("paused");
+	ProcWatch.PauseStartTime = GetTime();
+        ProcWatchPauseButton_OnEnter();
     end
 
 end
@@ -810,7 +836,6 @@ function ProcWatchExitButton_OnEnter()
     ProcWatch_Tooltip("Exit ProcWatch", "This completely shuts down ProcWatch.  All monitoring will cease and all totals are lost.");
 end
 
-
 function ProcWatchPauseButton_OnEnter()
 
     if (ProcWatch.Paused=="enabled") then
@@ -818,10 +843,12 @@ function ProcWatchPauseButton_OnEnter()
     elseif (ProcWatch.Paused=="paused") then
 	ProcWatch_Tooltip("Resume ProcWatch", "Resume monitoring for procs.");
     elseif (ProcWatch.Paused=="disabled") then
-	if not ProcWatch.Enabled then
+	if ProcWatch.Enabled and (ProcWatch.BeginTime>0) then
+	    ProcWatch_Tooltip("Pause ProcWatch", "Freeze hits, procs and time for the current fight.  Nothing moves until you resume.");
+	elseif not ProcWatch.Enabled then
 	    ProcWatch_Tooltip("Pause Disabled", "Monitoring is already suspended.  Once ProcWatch has an event to watch for, this button can be used to pause and resume monitoring without affecting totals.");
 	else
-	    ProcWatch_Tooltip("Pause Disabled", "ProcWatch is active and watching for procs in the current fight.  When the fight is over you can pause.");
+	    ProcWatch_Tooltip("Pause Disabled", "ProcWatch is currently idle and waiting for you to hit something.");
 	end
     end
 
@@ -830,7 +857,7 @@ end
 
 function ProcWatch_OnUpdate(elapsed)
 
-    if (ProcWatch.BeginTime > 0) and not ProcWatch.Minimized then
+    if (ProcWatch.BeginTime > 0) and not ProcWatch.Minimized and (ProcWatch.Paused~="paused") then
         f_ProcWatchElapsedSinceUpdate = f_ProcWatchElapsedSinceUpdate + elapsed;
         if (f_ProcWatchElapsedSinceUpdate >= 1) then
             f_ProcWatchElapsedSinceUpdate = 0;
@@ -841,7 +868,7 @@ end
 
 function ProcWatch_UpdateLiveDisplay()
 
-    local liveTime = GetTime() - ProcWatch.BeginTime;
+    local liveTime = GetTime() - ProcWatch.BeginTime - ProcWatch.PausedDuration;
     local liveTotalHits = ProcWatch.TotalHits + ProcWatch.Hits;
     local liveTotalProcs = ProcWatch.TotalProcs + ProcWatch.Procs;
     local liveTotalTime = ProcWatch.TotalTime + liveTime;
