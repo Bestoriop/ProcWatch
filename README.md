@@ -1,6 +1,6 @@
 # ProcWatch
 
-**Version 1.2 (modified)**
+**Version 1.1 (modified)**
 World of Warcraft 1.12.1 Addon — Proc rate tracker.
 
 ProcWatch helps determine the proc rate of an effect (weapon enchant, spell,
@@ -39,7 +39,7 @@ Matching is case-insensitive.
 - **Total**: cumulative history already committed **plus** the current
   fight, also updated in real time.
 - **Reset** (under each column):
-  - Current column: removes the last completed fight from the totals
+  - Last column: removes the last completed fight from the totals
     (useful for anomalies: disarmed, wrong weapon equipped, etc.)
   - Total column: resets the entire history.
 
@@ -82,20 +82,16 @@ Gello, Hyjal — original version.
 
 ## Changelog
 
-**1.2**
+**1.1**
 - Stats are now updated in real time during combat (instead of
   a static display only refreshed at the end of a fight).
-- The "Total" column now includes the fight in progress in addition to
-  already-committed history.
+- The pause button can now be used in combat (it is very useful for dummy fights)
 - Renamed "Hits/Proc" to "Procs/Hits", now shown as a percentage rounded
   to one decimal instead of a truncated ratio.
 - Fixed a bug where ending combat while paused would break the addon (the
   chat hook was never released, stats were never committed).
 - Fixed a bug where procs kept being counted while paused even though hits
   were correctly suspended.
-
-**1.1**
-- Updated the `.toc` file.
 
 **1.0**
 - Initial release.
